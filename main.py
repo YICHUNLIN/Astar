@@ -274,6 +274,33 @@ class Map:
 		self.canvas.create_rectangle(p.x*self.gridsize+1,p.y*self.gridsize+1,p.x*self.gridsize+self.gridsize-1,p.y*self.gridsize+self.gridsize-1, fill=color, outline=color, tag=color)
 
 
+class Searching:
+	def __init__(self, data, startPoint):
+		self.data = data
+		self.sp = startPoint
+
+	def do(self):
+		pass
+
+
+class Astart(Searching):
+	def __init__(self, data, startPoint):
+		super().__init__(data, startPoint)
+
+	def do(self):
+		print("--- A* ---")
+		itera = 0
+
+		openList = []
+		closeList = []
+		closeList.append(startPoint)
+		while True:
+			now = None
+			if itera == 0:
+				now = startPoint
+			itera = itera + 1
+
+
 
 
 
