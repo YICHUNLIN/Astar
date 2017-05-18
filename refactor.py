@@ -77,6 +77,9 @@ class SearchMap:
 		self.xsize = int(xsize)
 		self.ysize = int(ysize)
 		self.items = []
+		self.initMap()
+
+	def initMap(self):
 		for x in range(self.xsize-1):
 			tmp = []
 			for y in range(self.ysize-1):
@@ -125,6 +128,7 @@ class SearchMap:
 			self.items[self.goalXY.x][self.goalXY.y] = NormalItem() # reset
 		self.goal = None
 		self.goalXY = None
+
 	def clearOB(self):
 		for x in range(0, self.xsize - 1):
 			for y in range(0, self.ysize - 1):
@@ -136,6 +140,46 @@ class SearchMap:
 
 	def getGoal(self):
 		return (self.goalXY.x, self.goalXY.y, self.goal)
+
+	def saveFile(self, filename):
+		f = open(filename, 'w')
+		f.write(str(len(self.items)) + '\n')
+		f.write(str(len(self.items[1])) + '\n')
+		f.write("%d,%d\n" %(self.start.x, self.start.y))
+		f.write("%d,%d\n" %(self.goal.x, self.goal.y))
+
+		bcount = 0
+		gcount = 0
+		rcount = 0
+		for x in self.items:
+			for y in x:
+				if y.itype == 'black':
+					bcount = bcount + 1
+				elif y.itype == 'red':
+					rcount = rcount + 1
+				elif y.itype == 'green':
+					gcount = gcount + 1
+				f.write(y.savetype())
+			f.write('\n')
+		f.close()
+		print("File save as %s, x grids :%d , y grids :%d, 障礙物: %d, 起點:(%d,%d), 終點:(%d,%d)" %(filename, len(self.items), len(self.items[1]),bcount, self.startItem.x, self.startItem.y, self.endItem.x, self.endItem.y))
+
+	def loadFile(self, filename):
+		f = open(filename, 'r')
+		width = int(f.readline().replace('\n', ''))
+		height = int(f.readline().replace('\n', ''))
+		start = f.readline()
+		end = f.readline()
+		while True:
+			line = f.readline()
+			line = line.replace('\n','')
+			if not line:
+				break
+			line = line.split(';')
+			for aitem in line:
+				item_split = aitem.split(',')
+				print(item_split)
+		f.close()
 
 class NormalMap(SearchMap):
 	def __init__(self, xsize, ysize):
@@ -268,7 +312,13 @@ class ViewMap:
 
 
 	def e_clear(self, event):
+		self.canvas.delete('green')
+		self.canvas.delete('red')
+		self.canvas.delete('blue')
+		self.canvas.delete('black')
+		self.mis.initMap();
 
+		'''
 		if self.btnstatus == ActionPress.DELETE:
 			self.btnstatus = ActionPress.NOTHING
 			self.placebtn['text'] = "障礙"
@@ -279,6 +329,7 @@ class ViewMap:
 			self.placestartbtn['text'] = "起點(D)"
 			self.placeendbtn['text'] = "終點(D)"
 			self.placebtn['text'] = "障礙(D)"
+		'''
 
 	def e_save_map(self, event):
 		self.btnstatus = ActionPress.NOTHING
