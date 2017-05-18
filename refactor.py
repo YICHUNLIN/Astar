@@ -29,9 +29,9 @@ class Item:
 		self.g = 0
 		self.h = 0
 
-
 	def F(self):
 		return self.g + self.h
+
 
 	def setGH(self, g, h):
 		self.g = g 
@@ -80,11 +80,27 @@ class SearchMap:
 		self.initMap()
 
 	def initMap(self):
-		for x in range(self.xsize-1):
+		self.items = []
+		for x in range(self.xsize):
 			tmp = []
-			for y in range(self.ysize-1):
+			for y in range(self.ysize):
 				tmp.append(NormalItem())
 			self.items.append(tmp)
+		for x in range(self.xsize):
+			self.items[x][0] = OBItem()
+		for x in range(self.xsize):
+			self.items[x][self.ysize-1] = OBItem()
+		for x in range(self.ysize):
+			self.items[0][x] = OBItem()
+		for x in range(self.ysize):
+			self.items[self.xsize-1][x] = OBItem()
+
+	def removePart(self):
+		for x in range(len(self.items)):
+			for y in range(len(self.items[x])):
+				if self.items[x][y].itype != "black":
+					self.items[x][y] = NormalItem()
+
 
 	def addItem(self, newItem, x, y):
 		self.items[x][y] = newItem
@@ -202,38 +218,49 @@ class ViewMap:
 
 		#----------- button frame -----------
 		self.ButtonFrame.pack()
+
+		self.dijkstrabtn = Button(self.ButtonFrame, text ="Dijkstra")
+		self.dijkstrabtn.grid(row=0,column=0)
+		self.dijkstrabtn.bind("<Button-1>", self.e_do_Dijkstra)
+
 		self.astartbtn = Button(self.ButtonFrame, text ="A*")
-		self.astartbtn.grid(row=0,column=0)
+		self.astartbtn.grid(row=0,column=1)
 		self.astartbtn.bind("<Button-1>", self.e_do_A_start)
 
 		self.placebtn = Button(self.ButtonFrame, text ="障礙")
-		self.placebtn.grid(row=0,column=1)
+		self.placebtn.grid(row=0,column=2)
 		self.placebtn.bind("<Button-1>", self.e_place_ob)
 
 		self.placestartbtn = Button(self.ButtonFrame, text ="起點")
-		self.placestartbtn.grid(row=0,column=2)
+		self.placestartbtn.grid(row=0,column=3)
 		self.placestartbtn.bind("<Button-1>", self.e_place_start)
 
 		self.placeendbtn = Button(self.ButtonFrame, text ="終點")
-		self.placeendbtn.grid(row=0,column=3)
+		self.placeendbtn.grid(row=0,column=4)
 		self.placeendbtn.bind("<Button-1>", self.e_place_end)
 
 
 		self.clearbtn = Button(self.ButtonFrame, text ="刪除")
-		self.clearbtn.grid(row=0,column=4)
+		self.clearbtn.grid(row=0,column=5)
 		self.clearbtn.bind("<Button-1>", self.e_clear)
 
+
+		self.clearPartbtn = Button(self.ButtonFrame, text ="保留障礙")
+		self.clearPartbtn.grid(row=0,column=6)
+		self.clearPartbtn.bind("<Button-1>", self.e_clearPart)
+		'''
 		self.datafield = Entry(self.ButtonFrame)
-		self.datafield.grid(row=0,column=5)
+		self.datafield.grid(row=0,column=6)
 
 		self.loadbtn = Button(self.ButtonFrame, text ="載入")
-		self.loadbtn.grid(row=0,column=6)
+		self.loadbtn.grid(row=0,column=7)
 		self.loadbtn.bind("<Button-1>", self.e_load_map)
 
 
 		self.savebtn = Button(self.ButtonFrame, text ="儲存")
-		self.savebtn.grid(row=0,column=7)
+		self.savebtn.grid(row=0,column=8)
 		self.savebtn.bind("<Button-1>", self.e_save_map)
+		'''
 		#----------- button frame -----------
 
 
@@ -252,14 +279,29 @@ class ViewMap:
 		self.root.mainloop()
 	#-----------  event -----------
 	def e_do_A_start(self, event):
-		Ag = Astar(self.mis)
-		path = Ag.do()
-		
-		for item in path:
-			if item[2].itype == "yellow":
-				self.drawItems((item[0], item[1], PathItem()))
-			print("(%d,%d)"%(item[0], item[1]))
 
+		try:
+			Ag = Astar(self.mis)
+			path = Ag.do()
+			
+			for item in path:
+				if item[2].itype == "yellow":
+					self.drawItems((item[0], item[1], PathItem()))
+				print("(%d,%d)"%(item[0], item[1]))
+		except Exception as e:
+			print("No Start Or Goal")
+
+	def e_do_Dijkstra(self, event):
+		try:
+			dj = Dijkstra(self.mis)
+			path = dj.do()
+
+			for item in path:
+				if item[2].itype == "yellow":
+					self.drawItems((item[0], item[1], PathItem()))
+				print("(%d,%d)"%(item[0], item[1]))
+		except Exception as e:
+			print("No Start Or Goal")
 
 	def e_place_ob(self, event):
 
@@ -310,6 +352,12 @@ class ViewMap:
 				self.addItem(p, itype)
 				self.mis.SetOB(p)
 
+	def e_clearPart(self, event):
+
+		self.canvas.delete('green')
+		self.canvas.delete('red')
+		self.canvas.delete('blue')
+		self.mis.removePart()
 
 	def e_clear(self, event):
 		self.canvas.delete('green')
@@ -393,6 +441,7 @@ class Astar:
 		# init
 		self.openList.append(self.map.getStart())
 		self.goal = self.map.getGoal()
+			
 
 	def findMinF(self):
 		minf = 99999
@@ -473,7 +522,7 @@ class Astar:
 		print("--- A* ---")
 		# (x, y, item)
 		limitmax = 0
-		while limitmax < 5000:
+		while limitmax < 10000:
 			limitmax +=1
 			now = self.findMinF()
 			self.closeList.append(now)
@@ -483,10 +532,67 @@ class Astar:
 			self.span(now)
 		return self.closeList
 
+class Dijkstra(Astar):
+	def __init__(self, map):
+		super().__init__(map)
 
 
+	def findMinF(self):
+		minf = 99999
+		mini = 0
+		for i in range(0, len(self.openList)):
+			if self.openList[i][2].g < minf:
+				minf = self.openList[i][2].g
+				print(minf)
+				mini = i
+		return self.openList.pop(mini)
+
+	def span(self, now):
+		u = self.map.getItemByXY(now[0],now[1] - 1)
+		d = self.map.getItemByXY(now[0],now[1] + 1)
+		l = self.map.getItemByXY(now[0] - 1,now[1])
+		r = self.map.getItemByXY(now[0] + 1,now[1])
+		u[2].g = d[2].g = l[2].g = r[2].g = 10
 
 
+		lu = self.map.getItemByXY(now[0] - 1,now[1] - 1)
+		ru = self.map.getItemByXY(now[0] + 1,now[1] - 1)
+		ld = self.map.getItemByXY(now[0] - 1,now[1] + 1)
+		rd = self.map.getItemByXY(now[0] + 1,now[1] + 1)
+		lu[2].g = ru[2].g = ld[2].g = rd[2].g = 14
+		
+		if u[2].itype != 'black' and not self.isInOpenList(u) and not self.isInCloseList(u):
+			self.openList.append(u)
+		if d[2].itype != 'black' and not self.isInOpenList(d) and not self.isInCloseList(d):
+			self.openList.append(d)
+		if l[2].itype != 'black' and not self.isInOpenList(l) and not self.isInCloseList(l):
+			self.openList.append(l)
+		if r[2].itype != 'black' and not self.isInOpenList(r) and not self.isInCloseList(r):
+			self.openList.append(r)
+
+		if lu[2].itype != 'black' and not self.isInOpenList(lu) and not self.isInCloseList(lu):
+			self.openList.append(lu)
+		if ru[2].itype != 'black' and not self.isInOpenList(ru) and not self.isInCloseList(ru):
+			self.openList.append(ru)
+		if ld[2].itype != 'black' and not self.isInOpenList(ld) and not self.isInCloseList(ld):
+			self.openList.append(ld)
+		if rd[2].itype != 'black' and not self.isInOpenList(rd) and not self.isInCloseList(rd):
+			self.openList.append(rd)
+
+
+	def do(self):
+		print("--- A* ---")
+		# (x, y, item)
+		limitmax = 0
+		while limitmax < 50000:
+			limitmax +=1
+			now = self.findMinF()
+			self.closeList.append(now)
+			if self.isGoalinCloseList():
+				break
+
+			self.span(now)
+		return self.closeList
 
 def main():
 	md = ViewMap(width = 1000, height = 600, gridsize = 10)
