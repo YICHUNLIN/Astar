@@ -214,6 +214,7 @@ class ViewMap:
 		for item in path:
 			if item[2].itype == "yellow":
 				self.drawItems((item[0], item[1], PathItem()))
+			print("(%d,%d)"%(item[0], item[1]))
 
 
 	def e_place_ob(self, event):
@@ -420,11 +421,11 @@ class Astar:
 	def do(self):
 		print("--- A* ---")
 		# (x, y, item)
-
-		while True:
+		limitmax = 0
+		while limitmax < 5000:
+			limitmax +=1
 			now = self.findMinF()
 			self.closeList.append(now)
-			print(now)
 			if self.isGoalinCloseList():
 				break
 
