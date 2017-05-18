@@ -212,7 +212,8 @@ class ViewMap:
 		path = Ag.do()
 		
 		for item in path:
-			self.drawItems((item[0], item[1], PathItem()))
+			if item[2].itype == "yellow":
+				self.drawItems((item[0], item[1], PathItem()))
 
 
 	def e_place_ob(self, event):
