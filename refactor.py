@@ -105,11 +105,11 @@ class SearchMap:
 
 	def setNormal(self, point):
 		self.items[point.x][point.y] = NormalItem()
-		self.items[point.x][point.y].info()
+		#self.items[point.x][point.y].info()
 
 	def SetOB(self, point):
 		self.items[point.x][point.y] = OBItem()
-		self.items[point.x][point.y].info()
+		#self.items[point.x][point.y].info()
 
 	def getItemByXY(self, x, y):
 		return (x, y, self.items[x][y])
@@ -369,11 +369,6 @@ class Astar:
 		l[2].h = self.Manhattan(Point(l[0], l[1]))
 		r[2].h = self.Manhattan(Point(r[0], r[1]))
 
-		self.openList.append(u)
-		self.openList.append(d)
-		self.openList.append(l)
-		self.openList.append(r)
-
 		lu = self.map.getItemByXY(now[0] - 1,now[1] - 1)
 		ru = self.map.getItemByXY(now[0] + 1,now[1] - 1)
 		ld = self.map.getItemByXY(now[0] - 1,now[1] + 1)
@@ -384,19 +379,43 @@ class Astar:
 		ru[2].h = self.Manhattan(Point(ru[0], ru[1]))
 		ld[2].h = self.Manhattan(Point(ld[0], ld[1]))
 		rd[2].h = self.Manhattan(Point(rd[0], rd[1]))
+		
 
-		self.openList.append(lu)
-		self.openList.append(ru)
-		self.openList.append(ld)
-		self.openList.append(rd)
+		if u[2].itype != 'black' and not self.isInOpenList(u) and not self.isInCloseList(u):
+			self.openList.append(u)
+		if d[2].itype != 'black' and not self.isInOpenList(d) and not self.isInCloseList(d):
+			self.openList.append(d)
+		if l[2].itype != 'black' and not self.isInOpenList(l) and not self.isInCloseList(l):
+			self.openList.append(l)
+		if r[2].itype != 'black' and not self.isInOpenList(r) and not self.isInCloseList(r):
+			self.openList.append(r)
+
+		if lu[2].itype != 'black' and not self.isInOpenList(lu) and not self.isInCloseList(lu):
+			self.openList.append(lu)
+		if ru[2].itype != 'black' and not self.isInOpenList(ru) and not self.isInCloseList(ru):
+			self.openList.append(ru)
+		if ld[2].itype != 'black' and not self.isInOpenList(ld) and not self.isInCloseList(ld):
+			self.openList.append(ld)
+		if rd[2].itype != 'black' and not self.isInOpenList(rd) and not self.isInCloseList(rd):
+			self.openList.append(rd)
 
 	def isGoalinCloseList(self):
 		for i in self.closeList:
-			if (i[0] == self.goal[0]) and (i[1] == self.goal[1]):
+			if i[2].itype == self.goal[2].itype:
 				return True
-
 		return False
 
+	def isInOpenList(self, item):
+		for i in self.openList:
+			if (item[0] == i[0]) and (item[1] == i[1]):
+				return True
+		return False
+
+	def isInCloseList(self, item):
+		for i in self.closeList:
+			if (item[0] == i[0]) and (item[1] == i[1]):
+				return True
+		return False
 	def do(self):
 		print("--- A* ---")
 		# (x, y, item)
@@ -407,6 +426,7 @@ class Astar:
 			print(now)
 			if self.isGoalinCloseList():
 				break
+
 			self.span(now)
 		return self.closeList
 
