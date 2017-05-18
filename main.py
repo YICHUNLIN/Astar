@@ -17,21 +17,101 @@ class Point:
 		self.x = int(x)
 		self.y = int(y)
 
+	def newPoint(self, x , y):
+		return Point(self.x + x, self.y + y)
+
 
 class Item:
 	def __init__(self, point, itype):
 		self.point = point
 		self.itype = itype
+		self.g = 0
+		self.h = 0
 
 	def savetype(self):
 		return "%s,%s,%s;" % (self.point.x, self.point.y, self.itype)
 
+	def F(self):
+		return self.g + self.h
 
-class MapItems:
-	def __init__(self):
+	def setGH(self, g, h):
+		self.g = g 
+		self.h = h
+
+
+class NormalItem(Item):
+	def __init__(self, point, itype = "yellow"):
+		super().__init__(point.itype)
+
+class StartItem(Item):
+	def __init__(self, point, itype = "green"):
+		super().__init__(point, itype)
+
+class GoalItem(Item):
+	def __init__(self, point, itype = "red"):
+		super().__init__(point, itype)
+
+class WallItem(Item):
+	def __init__(self, point, itype = "brown"):
+		super().__init__(point, itype)
+
+class OBItem(Item):
+	def __init__(self, point, itype = "black"):
+		super().__init__(point, itype)
+
+class PathItem(Item):
+	def __init__(self, point, itype = "blue"):
+		super().__init__(point, itype)
+
+class ItemFactory:
+	def generateNormal(self, point):
+		return NormalItem(point)
+	
+	def generateStart(self, point):
+		return StartItem(point)
+
+	def generateGoal(self, point):
+		return GoalItem(point)
+
+	def generateWall(self, point):
+		return WallItem(point)
+
+	def generateOB(self, point):
+		return OBItem(point)
+
+	def generatePath(self, point):
+		return PathItem(point)
+
+
+class SearchMap:
+	def __init__(self, xsize, ysize):
+		self.start = None
+		self.goal = None
+		self.xsize = int(xsize)
+		self.ysize = int(ysize)
 		self.items = []
-		self.startItem = None
-		self.endItem = None
+		for x in range(self.xsize):
+			tmp = []
+			for y in range(self.ysize):
+				tmp.append(Item(Point(x,y),'yellow'))
+			self.items.append(tmp)
+
+	def addItem(self, newItem, x, y):
+		self.items[x][y] = newItem
+
+	def setStart(self, point):
+		 ItemFactory().generateStart(point)
+
+class NormalMap(SearchMap):
+	def __init__(self, xsize, ysize):
+		super().__init__(xsize, ysize)
+
+
+
+
+class MapItems(SearchMap):
+	def __init__(self):
+		super().__init__()
 
 
 	def addline(self, itemLine):
@@ -49,8 +129,8 @@ class MapItems:
 		f = open(filename, 'w')
 		f.write(str(len(self.items)) + '\n')
 		f.write(str(len(self.items[1])) + '\n')
-		f.write("%d,%d\n" %(self.startItem.x, self.startItem.y))
-		f.write("%d,%d\n" %(self.endItem.x, self.endItem.y))
+		f.write("%d,%d\n" %(self.start.x, self.start.y))
+		f.write("%d,%d\n" %(self.goal.x, self.goal.y))
 
 		bcount = 0
 		gcount = 0
@@ -85,7 +165,19 @@ class MapItems:
 				print(item_split)
 		f.close()
 
+	def getItemByXY(self, P):
+		if(P.x > 0 and P.x < len(self.items)) and (P.y > 0 and P.y < len(self.items[1])):
+			return self.items[P.x][P.y]
+		return None
 
+	def setItemByXY(self, P, value):
+		if(P.x > 0 and P.x < len(self.items)) and (P.y > 0 and P.y < len(self.items[1])):
+			self.items[P.x][P.y].itype = value
+			return self.items[P.x][P.y]
+		return None
+
+	def getStartEnd(self):
+		return (self.getItemByXY(self.start), self.getItemByXY(self.goal))
 
 
 
@@ -155,6 +247,8 @@ class Map:
 		self.root.mainloop()
 	#-----------  event -----------
 	def e_do_A_start(self, event):
+		Ag = Astart(self.mis)
+		Ag.do()
 		pass
 
 	def e_place_ob(self, event):
@@ -194,21 +288,21 @@ class Map:
 			if self.btnstatus == ActionPress.END:
 				itype = "red"
 				self.canvas.delete(itype)
-				self.mis.endItem = None
+				#self.mis.endItem = None
 				self.addItem(Point(p.x,p.y), itype)
-				self.mis.setItem(p.x,p.y,itype)
-				self.mis.endItem = p
+				#self.mis.setItem(p.x,p.y,itype)
+				#self.mis.endItem = p
 			elif self.btnstatus == ActionPress.START:
 				itype = "green"
 				self.canvas.delete(itype)
-				self.mis.startItem = None
+				#self.mis.startItem = None
 				self.addItem(Point(p.x,p.y), itype)
-				self.mis.setItem(p.x,p.y,itype)
-				self.mis.startItem = p
+				#self.mis.setItem(p.x,p.y,itype)
+				#self.mis.startItem = p
 			elif self.btnstatus == ActionPress.NORMAL:
 				itype = "black"
 				self.addItem(Point(p.x,p.y), itype)
-				self.mis.setItem(p.x,p.y,itype)
+				#self.mis.setItem(p.x,p.y,itype)
 
 
 	def e_clear(self, event):
@@ -226,13 +320,13 @@ class Map:
 
 	def e_save_map(self, event):
 		self.btnstatus = ActionPress.NOTHING
-		if self.datafield.get():
-			self.mis.saveFile(self.datafield.get())
+		#if self.datafield.get():
+			#self.mis.saveFile(self.datafield.get())
 
 	def e_load_map(self, event):
 		self.btnstatus = ActionPress.NOTHING
-		if self.datafield.get():
-			self.mis.loadFile(self.datafield.get())
+		#if self.datafield.get():
+			#self.mis.loadFile(self.datafield.get())
 
 	#-----------  event -----------
 
@@ -262,12 +356,12 @@ class Map:
 
 
 		for w in range(1, self.wgrids - 1):
-			tmp = []
+			#tmp = []
 			for h in range(1,self.hgrids -1):
-				tmp.append(Item(Point(w,h), 'yellow'))
+				#tmp.append(Item(Point(w,h), 'yellow'))
 				self.addItem(Point(w,h), 'yellow')
-			self.mis.addline(tmp)
-		self.mis.output()
+			#self.mis.addline(tmp)
+		#self.mis.output()
 
 
 	def addItem(self, p, color):
@@ -275,30 +369,94 @@ class Map:
 
 
 class Searching:
-	def __init__(self, data, startPoint):
-		self.data = data
-		self.sp = startPoint
+	def __init__(self, map):
+		self.map = map
+
 
 	def do(self):
 		pass
 
 
 class Astart(Searching):
-	def __init__(self, data, startPoint):
-		super().__init__(data, startPoint)
+	def __init__(self, map):
+		super().__init__(map)
+		self.openList = []
+		self.closeList = []
+		(self.start, self.end) = self.map.getStartEnd()
+		self.start.g = 0
+		self.start.h = self.Manhattan(self.start)
+		self.openList.append(self.start)
+
+
+	def Manhattan(self, item):
+		dx = abs(item.point.x - self.end.point.x)
+		dy = abs(item.point.y - self.end.point.y)
+		return 0
+
+
+	def findMinF(self):
+		min = 9999
+		mini = 0
+		for i in range(0,len(self.openList)):
+			if self.openList[i].F() < min:
+				min = self.openList[i].F()
+				mini = i
+		return self.openList.pop(mini)
+
+	def isGoal(self):
+		for it in self.closeList:
+			if it.itype == "red":
+				return True
+		return False
 
 	def do(self):
 		print("--- A* ---")
-		itera = 0
 
-		openList = []
-		closeList = []
-		closeList.append(startPoint)
 		while True:
-			now = None
-			if itera == 0:
-				now = startPoint
-			itera = itera + 1
+
+			now = self.findMinF()
+			now.itype = "blue"
+			print("(%d,%d)" %(now.point.x, now.point.y))
+			self.closeList.append(now)
+			if self.isGoal():
+				break
+			# 上
+			u = self.map.getItemByXY( now.point.newPoint(0, -1))
+			# 下
+			d = self.map.getItemByXY( now.point.newPoint(0, 1))
+			# 左
+			l = self.map.getItemByXY( now.point.newPoint(-1, 0))
+			# 右
+			r = self.map.getItemByXY( now.point.newPoint(0, -1))
+			# 左上
+			lu = self.map.getItemByXY( now.point.newPoint(-1, -1))
+			# 右上
+			ru = self.map.getItemByXY( now.point.newPoint(1, -1))
+			# 左下
+			ld = self.map.getItemByXY( now.point.newPoint(-1, 1))
+			# 右下
+			rd = self.map.getItemByXY( now.point.newPoint(1, 1))
+			u.g = d.g = l.g = r.g = 10
+			lu.g = ru.g = ld.g = rd.g = 14
+
+			u.h = self.Manhattan(u)
+			d.h = self.Manhattan(d)
+			l.h = self.Manhattan(l)
+			r.h = self.Manhattan(r)
+			lu.h = self.Manhattan(lu)
+			ru.h = self.Manhattan(ru)
+			ld.h = self.Manhattan(ld)
+			rd.h = self.Manhattan(rd)
+			self.openList.append(u)
+			self.openList.append(d)
+			self.openList.append(l)
+			self.openList.append(r)
+			self.openList.append(lu)
+			self.openList.append(ru)
+			self.openList.append(ld)
+			self.openList.append(rd)
+
+
 
 
 
@@ -306,7 +464,8 @@ class Astart(Searching):
 
 
 def main():
-	mis = MapItems()
+	#mis = MapItems()
+	mis = NormalMap(1000/10, 600/10)
 	md = Map(mis=mis, width = 1000, height = 600, gridsize = 10)
 	md.draw()
 
