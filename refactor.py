@@ -94,18 +94,28 @@ class SearchMap:
 			self.items[0][x] = OBItem()
 		for x in range(self.ysize):
 			self.items[self.xsize-1][x] = OBItem()
+		self.start = None
+		self.Goal = None
+		self.startXY = None
+		self.goalXY = None
 
 	def removePart(self):
 		for x in range(len(self.items)):
 			for y in range(len(self.items[x])):
 				if self.items[x][y].itype != "black":
 					self.items[x][y] = NormalItem()
+		self.start = None
+		self.Goal = None
+		self.startXY = None
+		self.goalXY = None
 
 
 	def addItem(self, newItem, x, y):
 		self.items[x][y] = newItem
 
 	def setStart(self, point):
+		if not self.startXY:
+			self.startXY = point
 		if self.start :
 			self.items[self.startXY.x][self.startXY.y] = NormalItem() # reset
 		self.startXY = point
@@ -115,6 +125,8 @@ class SearchMap:
 
 
 	def setGoal(self, point):
+		if not self.goalXY:
+			self.goalXY = point
 		if self.goal :
 			self.items[self.goalXY.x][self.goalXY.y] = NormalItem() # reset
 		self.goalXY = point
