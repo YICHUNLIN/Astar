@@ -77,6 +77,7 @@ class SearchMap:
 		self.xsize = int(xsize)
 		self.ysize = int(ysize)
 		self.items = []
+		self.goals = []
 		self.initMap()
 
 	def initMap(self):
@@ -95,9 +96,8 @@ class SearchMap:
 		for x in range(self.ysize):
 			self.items[self.xsize-1][x] = OBItem()
 		self.start = None
-		self.Goal = None
 		self.startXY = None
-		self.goalXY = None
+		self.goals = []
 
 	def removePart(self):
 		for x in range(len(self.items)):
@@ -105,9 +105,8 @@ class SearchMap:
 				if self.items[x][y].itype != "black":
 					self.items[x][y] = NormalItem()
 		self.start = None
-		self.Goal = None
 		self.startXY = None
-		self.goalXY = None
+		self.goals = []
 
 
 	def addItem(self, newItem, x, y):
@@ -124,7 +123,9 @@ class SearchMap:
 		self.start.info()
 
 
+
 	def setGoal(self, point):
+		'''
 		if not self.goalXY:
 			self.goalXY = point
 		if self.goal :
@@ -133,6 +134,11 @@ class SearchMap:
 		self.goal = GoalItem()
 		self.items[point.x][point.y] = self.goal
 		self.goal.info()
+		'''
+
+		it = GoalItem()
+		self.items[point.x][point.y] = it
+		self.goals.append((point.x, point.y, it))
 
 	def setNormal(self, point):
 		self.items[point.x][point.y] = NormalItem()
@@ -152,10 +158,16 @@ class SearchMap:
 		self.startXY = None
 
 	def clearGoal(self):
+		'''
 		if self.goal :
 			self.items[self.goalXY.x][self.goalXY.y] = NormalItem() # reset
 		self.goal = None
 		self.goalXY = None
+		'''
+
+		for g in self.goals:
+			self.items[g[0]][g[1]] = NormalItem()
+		self.goals = []
 
 	def clearOB(self):
 		for x in range(0, self.xsize - 1):
@@ -167,47 +179,8 @@ class SearchMap:
 		return (self.startXY.x, self.startXY.y, self.start)
 
 	def getGoal(self):
-		return (self.goalXY.x, self.goalXY.y, self.goal)
+		return self.goals
 
-	def saveFile(self, filename):
-		f = open(filename, 'w')
-		f.write(str(len(self.items)) + '\n')
-		f.write(str(len(self.items[1])) + '\n')
-		f.write("%d,%d\n" %(self.start.x, self.start.y))
-		f.write("%d,%d\n" %(self.goal.x, self.goal.y))
-
-		bcount = 0
-		gcount = 0
-		rcount = 0
-		for x in self.items:
-			for y in x:
-				if y.itype == 'black':
-					bcount = bcount + 1
-				elif y.itype == 'red':
-					rcount = rcount + 1
-				elif y.itype == 'green':
-					gcount = gcount + 1
-				f.write(y.savetype())
-			f.write('\n')
-		f.close()
-		print("File save as %s, x grids :%d , y grids :%d, 障礙物: %d, 起點:(%d,%d), 終點:(%d,%d)" %(filename, len(self.items), len(self.items[1]),bcount, self.startItem.x, self.startItem.y, self.endItem.x, self.endItem.y))
-
-	def loadFile(self, filename):
-		f = open(filename, 'r')
-		width = int(f.readline().replace('\n', ''))
-		height = int(f.readline().replace('\n', ''))
-		start = f.readline()
-		end = f.readline()
-		while True:
-			line = f.readline()
-			line = line.replace('\n','')
-			if not line:
-				break
-			line = line.split(';')
-			for aitem in line:
-				item_split = aitem.split(',')
-				print(item_split)
-		f.close()
 
 class NormalMap(SearchMap):
 	def __init__(self, xsize, ysize):
@@ -230,11 +203,11 @@ class ViewMap:
 
 		#----------- button frame -----------
 		self.ButtonFrame.pack()
-
+		'''
 		self.dijkstrabtn = Button(self.ButtonFrame, text ="Dijkstra")
 		self.dijkstrabtn.grid(row=0,column=0)
 		self.dijkstrabtn.bind("<Button-1>", self.e_do_Dijkstra)
-
+		'''
 		self.astartbtn = Button(self.ButtonFrame, text ="A*")
 		self.astartbtn.grid(row=0,column=1)
 		self.astartbtn.bind("<Button-1>", self.e_do_A_start)
@@ -260,19 +233,7 @@ class ViewMap:
 		self.clearPartbtn = Button(self.ButtonFrame, text ="保留障礙")
 		self.clearPartbtn.grid(row=0,column=6)
 		self.clearPartbtn.bind("<Button-1>", self.e_clearPart)
-		'''
-		self.datafield = Entry(self.ButtonFrame)
-		self.datafield.grid(row=0,column=6)
-
-		self.loadbtn = Button(self.ButtonFrame, text ="載入")
-		self.loadbtn.grid(row=0,column=7)
-		self.loadbtn.bind("<Button-1>", self.e_load_map)
-
-
-		self.savebtn = Button(self.ButtonFrame, text ="儲存")
-		self.savebtn.grid(row=0,column=8)
-		self.savebtn.bind("<Button-1>", self.e_save_map)
-		'''
+		
 		#----------- button frame -----------
 
 
@@ -292,16 +253,18 @@ class ViewMap:
 	#-----------  event -----------
 	def e_do_A_start(self, event):
 
-		try:
-			Ag = Astar(self.mis)
-			path = Ag.do()
-			
-			for item in path:
-				if item[2].itype == "yellow":
-					self.drawItems((item[0], item[1], PathItem()))
-				print("(%d,%d)"%(item[0], item[1]))
-		except Exception as e:
-			print("No Start Or Goal")
+		#try:
+		Ag = Astar(self.mis)
+		#path = Ag.do()
+		path = Ag.multiGoal()
+		
+		for item in path:
+			if item[2].itype == "yellow":
+				self.drawItems((item[0], item[1], PathItem()))
+			#print("(%d,%d)"%(item[0], item[1]))
+		print(len(path))
+		#except Exception as e:
+		#	print("No Start Or Goal")
 
 	def e_do_Dijkstra(self, event):
 		try:
@@ -351,7 +314,7 @@ class ViewMap:
 		if not ((p.x == 0) or (p.y == 0) or (p.x == self.wgrids-1) or (p.y == self.hgrids - 1)):
 			if self.btnstatus == ActionPress.END:
 				itype = "red"
-				self.canvas.delete(itype)
+				#self.canvas.delete(itype)
 				self.addItem(p, itype)
 				self.mis.setGoal(p)
 			elif self.btnstatus == ActionPress.START:
@@ -377,29 +340,6 @@ class ViewMap:
 		self.canvas.delete('blue')
 		self.canvas.delete('black')
 		self.mis.initMap();
-
-		'''
-		if self.btnstatus == ActionPress.DELETE:
-			self.btnstatus = ActionPress.NOTHING
-			self.placebtn['text'] = "障礙"
-			self.placeendbtn['text'] = "終點"
-			self.placestartbtn['text'] = "起點"
-		else:
-			self.btnstatus = ActionPress.DELETE
-			self.placestartbtn['text'] = "起點(D)"
-			self.placeendbtn['text'] = "終點(D)"
-			self.placebtn['text'] = "障礙(D)"
-		'''
-
-	def e_save_map(self, event):
-		self.btnstatus = ActionPress.NOTHING
-		#if self.datafield.get():
-			#self.mis.saveFile(self.datafield.get())
-
-	def e_load_map(self, event):
-		self.btnstatus = ActionPress.NOTHING
-		#if self.datafield.get():
-			#self.mis.loadFile(self.datafield.get())
 
 	#-----------  event -----------
 
@@ -450,9 +390,6 @@ class Astar:
 		self.map = map
 		self.openList = []
 		self.closeList = []
-		# init
-		self.openList.append(self.map.getStart())
-		self.goal = self.map.getGoal()
 			
 
 	def findMinF(self):
@@ -461,7 +398,6 @@ class Astar:
 		for i in range(0, len(self.openList)):
 			if self.openList[i][2].F() < minf:
 				minf = self.openList[i][2].F()
-				print(minf)
 				mini = i
 		return self.openList.pop(mini)
 
@@ -530,19 +466,49 @@ class Astar:
 			if (item[0] == i[0]) and (item[1] == i[1]):
 				return True
 		return False
+
 	def do(self):
 		print("--- A* ---")
+		print("Length of open : %d" %(len(self.openList)))
+		print("Length of close : %d" %(len(self.closeList)))
+		print("from start(%d,%d) to goal(%d,%d)" %(self.openList[0][0], self.openList[0][1], self.goal[0], self.goal[1]))
 		# (x, y, item)
 		limitmax = 0
 		while limitmax < 10000:
 			limitmax +=1
 			now = self.findMinF()
 			self.closeList.append(now)
+
+			print("Length of open : %d" %(len(self.openList)))
+			print("Length of close : %d" %(len(self.closeList)))
 			if self.isGoalinCloseList():
+				print(self.closeList)
 				break
 
 			self.span(now)
 		return self.closeList
+
+	def clearlist(self):
+		print("clear list")
+		self.openList = []
+		self.closeList = []
+
+	def multiGoal(self):
+
+		self.openList.append(self.map.getStart())
+		tmpclostList = []
+
+		for goal in self.map.getGoal():	
+			self.goal = goal
+			tmpclostList.extend(self.do())
+			self.clearlist()
+			# goal 變 start
+			self.goal[2].itype = "green"
+			self.openList.append(self.goal)
+	
+		return tmpclostList
+
+
 
 class Dijkstra(Astar):
 	def __init__(self, map):
@@ -596,7 +562,7 @@ class Dijkstra(Astar):
 		print("--- A* ---")
 		# (x, y, item)
 		limitmax = 0
-		while limitmax < 50000:
+		while limitmax < 10000:
 			limitmax +=1
 			now = self.findMinF()
 			self.closeList.append(now)
