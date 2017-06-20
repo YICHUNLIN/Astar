@@ -34,7 +34,7 @@ class Item:
 
 
 	def setGH(self, g, h):
-		self.g = g 
+		self.g = g
 		self.h = h
 
 	def info(self):
@@ -196,7 +196,7 @@ class ViewMap:
 		self.wgrids = int(self.width / self.gridsize)
 		self.hgrids = int(self.height / self.gridsize)
 		self.mis = SearchMap(self.wgrids, self.hgrids)
-		
+
 	def draw(self):
 		self.root = Tk()
 		self.ButtonFrame = Frame(self.root)
@@ -233,7 +233,7 @@ class ViewMap:
 		self.clearPartbtn = Button(self.ButtonFrame, text ="保留障礙")
 		self.clearPartbtn.grid(row=0,column=6)
 		self.clearPartbtn.bind("<Button-1>", self.e_clearPart)
-		
+
 		#----------- button frame -----------
 
 
@@ -257,7 +257,7 @@ class ViewMap:
 		Ag = Astar(self.mis)
 		#path = Ag.do()
 		path = Ag.multiGoal()
-		
+
 		for item in path:
 			if item[2].itype == "yellow":
 				self.drawItems((item[0], item[1], PathItem()))
@@ -390,7 +390,7 @@ class Astar:
 		self.map = map
 		self.openList = []
 		self.closeList = []
-			
+
 
 	def findMinF(self):
 		minf = 99999
@@ -405,7 +405,7 @@ class Astar:
 	def Manhattan(self,a):
 		dx = abs(a.x - self.goal[0])
 		dy = abs(a.y - self.goal[1])
-		return dx + dy
+		return (dx + dy)*10
 
 	def span(self, now):
 		u = self.map.getItemByXY(now[0],now[1] - 1)
@@ -429,7 +429,7 @@ class Astar:
 		ru[2].h = self.Manhattan(Point(ru[0], ru[1]))
 		ld[2].h = self.Manhattan(Point(ld[0], ld[1]))
 		rd[2].h = self.Manhattan(Point(rd[0], rd[1]))
-		
+
 
 		if u[2].itype != 'black' and not self.isInOpenList(u) and not self.isInCloseList(u):
 			self.openList.append(u)
@@ -498,14 +498,14 @@ class Astar:
 		self.openList.append(self.map.getStart())
 		tmpclostList = []
 
-		for goal in self.map.getGoal():	
+		for goal in self.map.getGoal():
 			self.goal = goal
 			tmpclostList.extend(self.do())
 			self.clearlist()
 			# goal 變 start
 			self.goal[2].itype = "green"
 			self.openList.append(self.goal)
-	
+
 		return tmpclostList
 
 
@@ -538,7 +538,7 @@ class Dijkstra(Astar):
 		ld = self.map.getItemByXY(now[0] - 1,now[1] + 1)
 		rd = self.map.getItemByXY(now[0] + 1,now[1] + 1)
 		lu[2].g = ru[2].g = ld[2].g = rd[2].g = 14
-		
+
 		if u[2].itype != 'black' and not self.isInOpenList(u) and not self.isInCloseList(u):
 			self.openList.append(u)
 		if d[2].itype != 'black' and not self.isInOpenList(d) and not self.isInCloseList(d):
