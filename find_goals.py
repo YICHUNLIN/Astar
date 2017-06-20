@@ -253,18 +253,19 @@ class ViewMap:
 	#-----------  event -----------
 	def e_do_A_start(self, event):
 
-		#try:
-		Ag = Astar(self.mis)
-		#path = Ag.do()
-		path = Ag.multiGoal()
+		try:
 
-		for item in path:
-			if item[2].itype == "yellow":
-				self.drawItems((item[0], item[1], PathItem()))
-			#print("(%d,%d)"%(item[0], item[1]))
-		print(len(path))
-		#except Exception as e:
-		#	print("No Start Or Goal")
+			Ag = Astar(self.mis)
+			#path = Ag.do()
+			path = Ag.multiGoal()
+
+			for item in path:
+				if item[2].itype == "yellow":
+					self.drawItems((item[0], item[1], PathItem()))
+				#print("(%d,%d)"%(item[0], item[1]))
+			print(len(path))
+		except Exception as e:
+			print("No Start Or Goal")
 
 	def e_do_Dijkstra(self, event):
 		try:

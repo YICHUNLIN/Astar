@@ -409,7 +409,7 @@ class Astar:
 	def Manhattan(self,a):
 		dx = abs(a.x - self.goal[0])
 		dy = abs(a.y - self.goal[1])
-		return dx + dy
+		return (dx + dy) * 10
 
 	def span(self, now):
 		u = self.map.getItemByXY(now[0],now[1] - 1)
